@@ -202,25 +202,27 @@ class MinimaxAgent(MultiAgentSearchAgent):
 			if gameState.isWin() or gameState.isLose():
 				return self.evaluationFunction(gameState)
 			actions = gameState.getLegalActions(agentIndex)
-			Utilities = []
+			value = 999999
 			for i in actions:
 				successor = gameState.generateSuccessor(agentIndex,i)
 				if(agentIndex==ghostCount):
-					Utilities.append(Max_Value(successor,depth-1))#we finished with ghosts
+					value = min(value, Max_Value(successor,depth-1))#we finished with ghosts
+					
 				else:
-					Utilities.append(Min_Value(successor,depth,agentIndex+1))#or we didn't
-			return min(Utilities)
+					value = min(value, Min_Value(successor,depth,agentIndex+1))#or we didn't
+					
+			return value
 
 
 		def Max_Value(gameState,depth):
 			if gameState.isWin() or gameState.isLose() or depth == 0:
 				return self.evaluationFunction(gameState)
 			actions = gameState.getLegalActions(0) #0 = pacman
-			Utilities = []
+			value = -999999
 			for i in actions:
 				successor= gameState.generateSuccessor(0,i)
-				Utilities.append(Min_Value(successor,depth,1))
-			return max(Utilities)
+				value = max(value, Min_Value(successor,depth,1))
+			return value
 
 		return Minimax_Decision(gameState)   
 
