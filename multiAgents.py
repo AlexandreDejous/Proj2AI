@@ -18,6 +18,15 @@ import random, util
 
 from game import Agent
 
+def euclideanDist(pos,goal):
+    x1,y1 = pos
+    x2,y2 = goal
+    return ((abs(x1-x2)**2)+(abs(y1-y2)**2))**0.5
+def manhattanDist(pos,goal):
+    x1,y1 = pos
+    x2,y2 = goal
+    return ((abs(x1-x2))+(abs(y1-y2)))
+
 class ReflexAgent(Agent):
     """
     A reflex agent chooses an action at each choice point by examining
@@ -51,6 +60,8 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
+
+
     def evaluationFunction(self, currentGameState, action):
         """
         Design a better evaluation function here.
@@ -72,9 +83,47 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        currPos = currentGameState.getPacmanPosition()
+
+        
+        nextGhost = 999999
+        for ghost in newGhostStates:
+            if nextGhost > manhattanDist(newPos,ghost.getPosition()):
+                nextGhost = manhattanDist(newPos,ghost.getPosition())
+        currentGhost = 999999
+        for ghost in newGhostStates:
+            if currentGhost > manhattanDist(currPos,ghost.getPosition()):
+                currentGhost = manhattanDist(currPos,ghost.getPosition())
+        threatFurther = (nextGhost>currentGhost) #true if pacman increased the distance between the nearest ghost this round and the nearest ghost from next round (they can be different)
+
+        willEat = (len(currentGameState.getFood().asList()) != len(newFood.asList())) # true if pacman will eat next round
+
+        foodPositions = newFood.asList()
+        nextFood = 999999
+        for food in foodPositions:
+            if nextFood > manhattanDist(newPos,food):
+                nextFood = manhattanDist(newPos,food)
+        currentFood = 999999   
+        for food in foodPositions:
+            if currentFood > manhattanDist(currPos,food):
+                currentFood = manhattanDist(currPos,food)
+        foodCloser = (currentFood>nextFood)#if pacman reduced distance with closest food from one round to anotehr (food can be different again)
+        
+
+        score = 0
+        if (threatFurther):#if ghost further +10
+            score+=10
+        if (willEat):#if pacman will eat next round +20
+            score+=20
+        if (foodCloser):#if food closer than last time +20
+            score+=20
+        else:           #if food further, -5
+            score-=5
+        if (nextGhost<2): #if ghost too close, SNAKE !!! ABORT THE MISSION !!!
+            score = 0
+        
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -135,7 +184,43 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        ghostCount = gameState.getNumAgents()-1#reduce computation
+
+        def Minimax-Decision(gameState):
+            actions = gameState.getLegalActions(0)
+            maxUtility = -99999
+            for i in actions:
+                successor = gameState.generateSuccessor(0, i)
+                currentUtility = Min-Value(successor,self.depth,1)#begin with agent 1 a.k.a ghost 1
+                if maxUtility < currentUtility:
+                    maxUtility = currentUtility
+                    maxAction = i
+            return maxAction
+
+
+        def Min-Value(gameState,depth,agentIndex):
+            if gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            actions = gameState.getLegalActions(agentIndex)
+            for i in actions:
+                successor = gameState.generateSuccessor(agentIndex,i)
+
+                if(agentIndex==ghostCount):
+                    return Max-Value(successor,depth-1)#we finished with ghosts
+                else:
+                    return Min-Value(successor,depth,agentIndex)#or we didn't
+                return 
+
+            
+        return 0
+
+        def Max-Value(gameState,depth):
+            if gameState.isWin() or gameState.isLose() or depth == 0:
+                return self.evaluationFunction(gameState)
+            util.raiseNotDefined()
+        #util.raiseNotDefined()
+
+        return Minimax-Decision(gameState)   
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
